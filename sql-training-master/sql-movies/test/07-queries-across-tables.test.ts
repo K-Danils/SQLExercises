@@ -1,4 +1,5 @@
 import { Database } from "../src/database";
+import { ACTORS, DIRECTORS, GENRES, KEYWORDS, MOVIES, MOVIE_ACTORS, MOVIE_DIRECTORS, MOVIE_GENRES, MOVIE_KEYWORDS, MOVIE_RATINGS } from "../src/table-names";
 import { minutes } from "./utils";
 
 describe("Queries Across Tables", () => {
@@ -11,7 +12,18 @@ describe("Queries Across Tables", () => {
   it(
     "should select top three directors ordered by total budget spent in their movies",
     async done => {
-      const query = `todo`;
+      const query = `
+      SELECT 
+      d.full_name as director,
+      ROUND(SUM(m.budget_adjusted), 2) as total_budget
+      FROM ${MOVIE_DIRECTORS} md 
+      INNER JOIN ${DIRECTORS} d
+      ON md.director_id = d.id
+      INNER JOIN ${MOVIES} m
+      ON md.movie_id = m.id
+      GROUP BY d.full_name
+      ORDER BY total_budget DESC
+      LIMIT 3`;
       const result = await db.selectMultipleRows(query);
 
       expect(result).toEqual([
@@ -37,7 +49,18 @@ describe("Queries Across Tables", () => {
   it(
     "should select top 10 keywords ordered by their appearance in movies",
     async done => {
-      const query = `todo`;
+      const query = `
+      SELECT 
+      k.keyword as keyword,
+      count(keyword) as count
+      FROM ${MOVIE_KEYWORDS} mk 
+      INNER JOIN ${KEYWORDS} k
+      ON mk.keyword_id = k.id
+      INNER JOIN ${MOVIES} m
+      ON mk.movie_id = m.id
+      GROUP BY keyword
+      ORDER BY count DESC
+      LIMIT 10`;
       const result = await db.selectMultipleRows(query);
 
       expect(result).toEqual([
@@ -91,7 +114,15 @@ describe("Queries Across Tables", () => {
   it(
     "should select all movies called Life and return amount of actors",
     async done => {
-      const query = `todo`;
+      const query = `
+      SELECT 
+      m.original_title as original_title,
+      count(case WHEN m.original_title='Life' THEN 1 ELSE null END) as count
+      FROM ${MOVIE_ACTORS} ma 
+      INNER JOIN ${ACTORS} a
+      ON ma.actor_id = a.id
+      INNER JOIN ${MOVIES} m
+      ON ma.movie_id = m.id and m.original_title = 'Life'`;
       const result = await db.selectSingleRow(query);
 
       expect(result).toEqual({
@@ -107,7 +138,18 @@ describe("Queries Across Tables", () => {
   it(
     "should select three genres which has most ratings with 5 stars",
     async done => {
-      const query = `todo`;
+      const query = `
+      SELECT 
+      g.genre as genre,
+      count(case WHEN mr.rating = 5 THEN 1 ELSE null END) as five_stars_count
+      FROM ${MOVIE_GENRES} mg 
+      INNER JOIN ${GENRES} g
+      ON mg.genre_id = g.id
+      INNER JOIN ${MOVIE_RATINGS} mr
+      ON mg.movie_id = mr.movie_id
+      GROUP BY genre
+      ORDER BY five_stars_count DESC
+      LIMIT 3`;
       const result = await db.selectMultipleRows(query);
 
       expect(result).toEqual([
@@ -133,7 +175,18 @@ describe("Queries Across Tables", () => {
   it(
     "should select top three genres ordered by average rating",
     async done => {
-      const query = `todo`;
+      const query = `
+      SELECT 
+      g.genre as genre,
+      ROUND(AVG(mr.rating), 2) as avg_rating
+      FROM ${MOVIE_GENRES} mg 
+      INNER JOIN ${GENRES} g
+      ON mg.genre_id = g.id
+      INNER JOIN ${MOVIE_RATINGS} mr
+      ON mg.movie_id = mr.movie_id
+      GROUP BY genre
+      ORDER BY avg_rating DESC
+      LIMIT 3`;
       const result = await db.selectMultipleRows(query);
 
       expect(result).toEqual([
